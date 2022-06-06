@@ -1,0 +1,9 @@
+__pycache__/
+/.DS_Store
+/.ipynb_checkpoints
+data/raw_data
+unused/
+legacy/
+glove.42B.300d.txt
+glove_embeddings.json
+combined.csv
