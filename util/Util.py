@@ -4,7 +4,7 @@ import pandas as pd
 def read_csv(path, sep=',', index_col=None, quoting=0, header='infer', verbose:bool = True):
     df = pd.read_csv(path, sep=sep, index_col=index_col, quoting=quoting, header=header)
     if verbose:
-        print(f"* Read CSV from path: {path}. Size: {df.shape}")
+        print(f"* Reading CSV from path: {path}. Size: {df.shape}")
     return df
 
 
