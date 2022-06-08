@@ -20,13 +20,17 @@ class SbertClassifier:
         return hits
 
     def classify(self, query, positives, negatives):
+        query_embedding = self.encoder.encode(query)
         X = np.concatenate((positives, negatives))
         X = self.encoder.encode(list(X), convert_to_tensor=True)
-        y = np.concatenate((np.ones(len(positives)), np.zeros(len(negatives))))
+        pos_labels = ['positive' for _ in range(len(positives))]
+        neg_labels = ['negative' for _ in range(len(negatives))]
+        y = np.concatenate((pos_labels, neg_labels))
+        # y = np.concatenate((np.ones(len(positives)), np.zeros(len(negatives))))
         # results = self.search(query)
-        logreg = LogisticRegression()
+        logreg = LogisticRegression(class_weight='balanced')
         logreg.fit(X, y)
-        return logreg.predict(self.encoder.encode(query))
+        return logreg.predict(query_embedding), logreg.predict_proba(query_embedding)
 
 
 if __name__ == '__main__':
@@ -40,10 +44,12 @@ if __name__ == '__main__':
         print(df.iloc[hit['corpus_id']].id)'''
 
     train = pd.read_csv('data/train/Healthcare.csv', delimiter=';')
-    positives_id = train[train['Rating'] == 1.0]['Firmnav ID'].tolist()
-    negatives_id = train[train['Rating'] == 0.0]['Firmnav ID'].tolist()
+    positives_id = train[(train['Rating'] == 1.0) & (train['AI search'] != 'Initial')]['Firmnav ID'].tolist()
+    negatives_id = train[(train['Rating'] == 0.0) & (train['AI search'] != 'Initial')]['Firmnav ID'].tolist()
+    unrated_id = train[(train['Rating'] != 1.0) & (train['Rating'] != 0.0)]['Firmnav ID'].tolist()
     positives_txt = []
     negatives_txt = []
+    unrated_txt = []
     for fid in positives_id:
         txt = df[df['id'] == fid].description.tolist()
         if len(txt) > 1:
@@ -56,11 +62,22 @@ if __name__ == '__main__':
             txt = [txt[0]]
         if len(txt) > 0:
             negatives_txt.append(txt)
+    for fid in unrated_id:
+        txt = df[df['id'] == fid].description.tolist()
+        if len(txt) > 1:
+            txt = [txt[0]]
+        if len(txt) > 0:
+            unrated_txt.append(txt)
 
     positives_txt = [item for sublist in positives_txt for item in sublist]
     negatives_txt = [item for sublist in negatives_txt for item in sublist]
-    q = df[df['id'] == 'SE5567738249'].description.tolist()
-    print(sbert.classify(q, positives_txt, negatives_txt))
-    print('niggers')
-
-
+    prediction, probability, desc = [], [], []
+    for txt in unrated_txt:
+        pred, proba = sbert.classify(txt, positives_txt, negatives_txt)
+        prediction.append(pred)
+        probability.append(proba)
+        desc.append(txt[0])
+    result = {'prediction': prediction, 'probability': probability, 'description': desc}
+    result = pd.DataFrame(result)
+    # result.to_csv('result.csv', index=True)
+    print(result)
