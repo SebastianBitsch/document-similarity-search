@@ -164,7 +164,8 @@ class DataFrameFeatures:
 
     def keyword_rank(self, query: str) -> np.array:
         self.keyword_extractor.extract_keywords_from_text(query)
-        query_words = self.keyword_extractor.get_ranked_phrases()
+        phrases = self.keyword_extractor.get_ranked_phrases()
+        query_words = [x for xs in phrases for x in xs.split()]
 
         # Get average glove embedding for every keyword
         query_vector = np.mean([self.glove[str(word)] for word in query_words if word in self.glove], axis=0)
@@ -204,9 +205,9 @@ class DataFrameFeatures:
 
         cosine_rank = self.cosine_similarity_rank(text)
         overlap_rank = self.overlapping_words_rank(text)
-        glove_rank = self.glove_rank(text)
+        glove_rank = self.glove_rank(query['description'])
         nace_rank = self.nace_code_rank(query['NACE'])
-        keyword_rank = self.keyword_rank(text)
+        keyword_rank = self.keyword_rank(query['description'])
         
         return np.array([cosine_rank, overlap_rank, glove_rank, nace_rank, keyword_rank],dtype=object)
 
