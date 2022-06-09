@@ -5,7 +5,7 @@ import torch
 
 from sentence_transformers import SentenceTransformer, util
 
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, RidgeClassifier
 
 
 class SbertClassifier:
@@ -32,6 +32,49 @@ class SbertClassifier:
         logreg.fit(X, y)
         return logreg.predict(query_embedding), logreg.predict_proba(query_embedding)
 
+    def interactive_classify(self, queries, positives, negatives, reruns=3):
+        if reruns == 0:
+            print('Final run')
+            prediction, probability, desc = [], [], []
+            for q in queries:
+                pred, prob = self.classify(q, positives, negatives)
+                prediction.append(pred), probability.append(prob), desc.append(q)
+            return {'prediction': prediction, 'probability': probability, 'description': desc}
+        else:
+            print(f'Runs remaining: {reruns}')
+            clf_prediction, clf_probability = [], []
+
+            for q in queries:
+                clf_pred, clf_prob = self.classify(q, positives, negatives)
+                clf_prediction.append(clf_pred)
+                clf_probability.append(clf_prob[0])
+
+            # calculate label differences
+            diffs = []
+            for q, pred, probs in zip(queries, clf_prediction, clf_probability):
+                triplets = (q, pred, max(probs) - min(probs))
+                diffs.append(triplets)
+            diffs = sorted(diffs, key=lambda x: x[2])
+            min_diff = diffs[:5]
+
+            # prompt user for labels for texts in min_diff
+            for val in min_diff:
+                print(f'Difference in label probabilities {val[2]}')
+                print(val[0])
+                # print(queries[val[1]])
+                label = input('Is the above text positive or negative?')
+                if label == 'positive' or label == '1':
+                    positives.append(val[0][0])
+                elif label == 'negative' or label == '0':
+                    negatives.append(val[0][0])
+            # remove prompted queries from queries
+            new_queries = [queries[i] for i in range(len(queries))
+                           if queries[i][0] not in positives and queries[i][0] not in negatives]
+
+            # rerun interactive_classify
+            reruns -= 1
+            return self.interactive_classify(new_queries, positives, negatives, reruns)
+
 
 if __name__ == '__main__':
     df = pd.read_csv('data/cleaned_v1.csv')
@@ -43,8 +86,8 @@ if __name__ == '__main__':
         print(f'{hit["score"]}   {passages[hit["corpus_id"]]}')
         print(df.iloc[hit['corpus_id']].id)'''
 
-    train = pd.read_csv('data/train/Healthcare.csv', delimiter=';')
-    positives_id = train[(train['Rating'] == 1.0) & (train['AI search'] != 'Initial')]['Firmnav ID'].tolist()
+    train = pd.read_csv('data/train/Online games.csv', delimiter=';')
+    positives_id = train[(train['Rating'] == 1.0)]['Firmnav ID'].tolist()
     negatives_id = train[(train['Rating'] == 0.0) & (train['AI search'] != 'Initial')]['Firmnav ID'].tolist()
     unrated_id = train[(train['Rating'] != 1.0) & (train['Rating'] != 0.0)]['Firmnav ID'].tolist()
     positives_txt = []
@@ -71,7 +114,10 @@ if __name__ == '__main__':
 
     positives_txt = [item for sublist in positives_txt for item in sublist]
     negatives_txt = [item for sublist in negatives_txt for item in sublist]
-    prediction, probability, desc = [], [], []
+    interactive_results = sbert.interactive_classify(unrated_txt, positives_txt, negatives_txt, reruns=3)
+    interactive_results = pd.DataFrame(interactive_results)
+    interactive_results.to_csv('interactive_results.csv', index=True)
+    '''prediction, probability, desc = [], [], []
     for txt in unrated_txt:
         pred, proba = sbert.classify(txt, positives_txt, negatives_txt)
         prediction.append(pred)
@@ -81,3 +127,5 @@ if __name__ == '__main__':
     result = pd.DataFrame(result)
     # result.to_csv('result.csv', index=True)
     print(result)
+    print(result[result['prediction'] == 'positive'].shape[0])
+    print(result[result['prediction'] == 'positive'].description)'''
