@@ -12,12 +12,25 @@ class SbertClassifier:
     def __init__(self, corpus_embeddings):
         self.corpus_embeddings = corpus_embeddings
         self.encoder = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
+        self.clf = LogisticRegression(class_weight='balanced')
+        self.fitted = False
+
+    def encode(self, text):
+        text_embedding = self.encoder.encode(text, convert_to_tensor=True)
+        return text_embedding
 
     def search(self, query):
         query_embedding = self.encoder.encode(query, convert_to_tensor=True)
         hits = util.semantic_search(query_embedding, self.corpus_embeddings, top_k=32)
         hits = hits[0]
         return hits
+
+    def fit_logreg(self, X, y):
+        self.clf.fit(X, y)
+        self.fitted = True
+
+    def classify_no_encode(self, X, y):
+        return self.clf.predict(X), self.clf.predict_proba(X), self.clf.predict(X) == y
 
     def classify(self, query, positives, negatives):
         query_embedding = self.encoder.encode(query)
