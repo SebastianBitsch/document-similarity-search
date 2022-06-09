@@ -9,6 +9,8 @@ from itertools import zip_longest
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+from rake_nltk import Rake # for keyword extraction
+
 class DataFrameFeatures:
 
     def __init__(self, df: pd.DataFrame, vectorizer: TfidfVectorizer, glove_embeddings: dict = None, main_col: str = "description", verbose: bool = True) -> None: # description_no_stopwords_stemmed
@@ -48,18 +50,28 @@ class DataFrameFeatures:
         # Read in the pretrained glove embeddings
         self.glove = glove_embeddings
 
+        # Create keyword extractor
+        self.keyword_extractor = Rake() #max_length=1
+        self.keyword_vectors = []
+
         # Create average glove embedding vectors
         self.avg_glove_vectors = []
         if not glove_embeddings:
             return
 
-        for doc in self.documents():
+        for doc in self.documents('description'):
+
             avg_vector = np.mean([self.glove[str(word)] for word in doc.split() if str(word) in self.glove], axis=0)
-            
-            # Safeguard against texts where no of the words are in the glove vocabulary, shouldnt happen tho 
-            if type(avg_vector) is np.float64:
-                avg_vector = np.zeros(300)
             self.avg_glove_vectors.append(avg_vector)
+
+            # Extract keywords with scores for every document
+            self.keyword_extractor.extract_keywords_from_text(doc)
+            phrases = self.keyword_extractor.get_ranked_phrases()
+            words = [x for xs in phrases for x in xs.split()]
+
+            # Get average glove embedding for every keyword
+            keyword_vector = np.mean([self.glove[str(word)] for word in words if str(word) in self.glove], axis=0)
+            self.keyword_vectors.append(keyword_vector)
 
 
 
@@ -150,6 +162,15 @@ class DataFrameFeatures:
         return np.array([x/max_score for x in scores])
 
 
+    def keyword_rank(self, query: str) -> np.array:
+        self.keyword_extractor.extract_keywords_from_text(query)
+        query_words = self.keyword_extractor.get_ranked_phrases()
+
+        # Get average glove embedding for every keyword
+        query_vector = np.mean([self.glove[str(word)] for word in query_words if word in self.glove], axis=0)
+        return np.array([cosine_similarity([query_vector],[i])[0][0] for i in self.keyword_vectors])
+
+
     def glove_rank(self, query: str) -> np.ndarray:
         """
         Gives the cosine similarity between the average glove embedding of a query string and every average glove embedding for df, which has been calculated beforehand
@@ -185,8 +206,9 @@ class DataFrameFeatures:
         overlap_rank = self.overlapping_words_rank(text)
         glove_rank = self.glove_rank(text)
         nace_rank = self.nace_code_rank(query['NACE'])
+        keyword_rank = self.keyword_rank(text)
         
-        return np.array([cosine_rank, overlap_rank, glove_rank, nace_rank],dtype=object)
+        return np.array([cosine_rank, overlap_rank, glove_rank, nace_rank, keyword_rank],dtype=object)
 
 
 if __name__ == "__main__":

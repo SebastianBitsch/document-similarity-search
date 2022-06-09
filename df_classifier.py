@@ -72,16 +72,13 @@ class DataFrameClassifier:
             If true the dataframe is split, where the initials are used as the test-set
             and the rest are returned as the training-set.
         """
-        feature_vectors = np.array([self.dff.feature_vector(doc_id) for doc_id in self.dff.documents('id')])
-        X_means = np.mean(feature_vectors,axis=1)
-        X_vars = np.mean(feature_vectors, axis=1)
-        X_medians = np.mean(feature_vectors, axis=1)
-        # X_means = np.array([np.mean(self.dff.feature_vector(doc_id),axis=1) for doc_id in self.dff.documents('id')])
-        # X_vars = np.array([np.var(self.dff.feature_vector(doc_id),axis=1) for doc_id in self.dff.documents('id')])
-        # X_medians = np.array([np.median(self.dff.feature_vector(doc_id),axis=1) for doc_id in self.dff.documents('id')])
-        X = np.hstack((X_means, X_vars, X_medians))
+        # feature_vectors = np.array([self.dff.feature_vector(doc_id) for doc_id in self.dff.documents('id')])
+        # X_means = np.mean(feature_vectors,axis=1)
+        # X_vars = np.mean(feature_vectors, axis=1)
+        # X_medians = np.mean(feature_vectors, axis=1)
+        # X = np.hstack((X_means, X_vars, X_medians))
 
-        # X = np.array([np.median(self.dff.feature_vector(doc_id),axis=1) for doc_id in self.dff.documents('id')])
+        X = np.array([np.median(self.dff.feature_vector(doc_id),axis=1) for doc_id in self.dff.documents('id')])
         y = np.array(self.dff.documents('Rating'))
         
         if not split:
