@@ -16,6 +16,7 @@ class DataFrameClassifier:
         
         input = self.read_train_file(file_name, verbose)
         subset_df = self.create_subset_df(dff.df, input)
+
         self.dff = DataFrameFeatures(df = subset_df, vectorizer=dff.vectorizer, glove_embeddings=glove_embeddings, main_col = dff.main_col, verbose=verbose)
 
     def create_subset_df(self, full_df: pd.DataFrame, input: pd.DataFrame) -> pd.DataFrame:
@@ -89,6 +90,21 @@ class DataFrameClassifier:
         X_test, y_test = X[filter], y[filter]
         
         return X_train, y_train, X_test, y_test
+
+
+    def get_tfidf_vectors(self, split:bool = False) -> tuple:
+        X = self.dff.get_tfidf_vectors()
+        y = np.array(self.dff.documents('Rating'))
+
+        if not split:
+            return (X, y)
+
+        filter = self.dff.df['Initial'].to_numpy()
+        X_train, y_train = X[~filter], y[~filter]
+        X_test, y_test = X[filter], y[filter]
+        
+        return X_train, y_train, X_test, y_test
+
 
 
 # Example usage

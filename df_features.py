@@ -59,8 +59,7 @@ class DataFrameFeatures:
         if not glove_embeddings:
             return
 
-        for doc in self.documents('description'):
-
+        for doc in self.documents('description_no_stopwords'):
             avg_vector = np.mean([self.glove[str(word)] for word in doc.split() if str(word) in self.glove], axis=0)
             self.avg_glove_vectors.append(avg_vector)
 
@@ -124,7 +123,7 @@ class DataFrameFeatures:
         query_words = set(query.split())
         
         for i, doc in enumerate(self.documents()):
-            n_overlap = len(query_words.intersection(doc.split()))
+            n_overlap = len(query_words.intersection(set(doc.split())))
             overlapping_words[i] = n_overlap / min(len(query_words), len(doc))
 
         return np.array(overlapping_words)
@@ -205,11 +204,14 @@ class DataFrameFeatures:
 
         cosine_rank = self.cosine_similarity_rank(text)
         overlap_rank = self.overlapping_words_rank(text)
-        glove_rank = self.glove_rank(query['description'])
+        glove_rank = self.glove_rank(query['description_no_stopwords'])
         nace_rank = self.nace_code_rank(query['NACE'])
-        keyword_rank = self.keyword_rank(query['description'])
+        keyword_rank = self.keyword_rank(query['description_no_stopwords'])
         
         return np.array([cosine_rank, overlap_rank, glove_rank, nace_rank, keyword_rank],dtype=object)
+
+    def get_tfidf_vectors(self) -> np.ndarray:
+        return self.fitted_vectorizer.toarray()
 
 
 if __name__ == "__main__":
