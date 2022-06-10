@@ -27,14 +27,21 @@ def get_results(sbert=clf, filenames=None):
         filenames = trainfiles
     # left_out = np.random.choice(filenames)
     # filenames.remove(left_out)
-    true_positive = 0
-    true_negative = 0
-    false_positive = 0
-    false_negative = 0
+    true_positives = []
+    true_negatives = []
+    false_positives = []
+    false_negatives = []
+    recalls = []
+    precisions = []
     total = 0
     y_true, y_pred = [], []
+    loo = LeaveOneOut()
     for name in filenames:
-        np.random.seed(40)
+        # np.random.seed(40)
+        true_positive = 0
+        true_negative = 0
+        false_positive = 0
+        false_negative = 0
         df_train = pd.read_csv(f'data/train/{name}', delimiter=';')
         positive_ids = df_train[df_train['Rating'] == 1.0]['Firmnav ID'].tolist()
         negative_ids = df_train[df_train['Rating'] == 0.0]['Firmnav ID'].tolist()
@@ -61,8 +68,6 @@ def get_results(sbert=clf, filenames=None):
         X = np.concatenate((positive_txt, negative_txt))
         X = sbert.encode(list(X))
         y = np.concatenate((pos_labels, neg_labels))
-        loo = LeaveOneOut()
-        loo.get_n_splits(X)
 
         for train_index, test_index in tqdm(loo.split(X)):
             # print("TRAIN:", train_index, "TEST:", test_index)
@@ -82,45 +87,36 @@ def get_results(sbert=clf, filenames=None):
             y_true.append(ytest[0])
             y_pred.append(prediction[0])
             total += 1
-    return true_negative, true_positive, false_positive, false_negative, total, y_true, y_pred
+        # print(loo.get_n_splits(X))
+        true_negatives.append(true_negative)
+        true_positives.append(true_positive)
+        false_negatives.append(false_negative)
+        false_positives.append(false_positive)
+        recalls.append(true_positive/(true_positive + false_negative))
+        precisions.append(true_positive/(true_positive + false_positive))
+    return true_negatives, true_positives, false_positives, false_negatives, total, y_true, y_pred, recalls, precisions
 
 
 if __name__ == '__main__':
-    recalls = []
-    precisions = []
-    Cs, Fs = [], []
-    for _ in tqdm(range(10)):
-        TN, TP, FP, FN, total, y_true, y_pred = get_results()
-        y_true = [1 if val == 'positive' else 0 for val in y_true]
-        y_pred = [1 if val == 'positive' else 0 for val in y_pred]
-        '''disp = PrecisionRecallDisplay.from_predictions(np.array(y_true), np.array(y_pred))
-        disp.plot()
-        plt.show()'''
-        precision = TP/(TP+FP)
-        recall = TP/(TP+FN)
-        '''print(f'The number of True Positives were {TP}\n'
-              f'The number of True Negatives were {TN}\n'
-              f'The total number of correct were {TP+TN}\n'
-              f'The number of False Positives were {FP}\n'
-              f'The number of False Negatives were {FN}\n'
-              f'The ratio of correct predictions were {(TP+TN)/total}\n'
-              f'The ratio of false predictions were {(FP+FN)/total}\n'
-              f'Precision is {precision}\n'
-              f'Recall is {recall}')'''
-        precisions.append(precision)
-        recalls.append(recall)
-        Cs.append(TP+TN)
-        Fs.append(FP+FN)
+    # for _ in tqdm(range(10)):
+    TN, TP, FP, FN, total, y_true, y_pred, recalls, precisions = get_results()
+    y_true = [1 if val == 'positive' else 0 for val in y_true]
+    y_pred = [1 if val == 'positive' else 0 for val in y_pred]
+    '''disp = PrecisionRecallDisplay.from_predictions(np.array(y_true), np.array(y_pred))
+    disp.plot()
+    plt.show()'''
+    '''print(f'The number of True Positives were {TP}\n'
+          f'The number of True Negatives were {TN}\n'
+          f'The total number of correct were {TP+TN}\n'
+          f'The number of False Positives were {FP}\n'
+          f'The number of False Negatives were {FN}\n'
+          f'The ratio of correct predictions were {(TP+TN)/total}\n'
+          f'The ratio of false predictions were {(FP+FN)/total}\n'
+          f'Precision is {precision}\n'
+          f'Recall is {recall}')'''
 
-    mean_precisions = np.mean(precisions)
-    mean_recalls = np.mean(recalls)
-    mean_correct = np.mean(Cs)
-    mean_false = np.mean(Fs)
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
-    ax1.plot(mean_precisions)
-    ax2.plot(mean_recalls)
-    ax3.plot(mean_correct)
-    ax4.plot(mean_false)
-    plt.show()
+    print(np.mean(precisions))
+    print(np.mean(recalls))
+
 
 
