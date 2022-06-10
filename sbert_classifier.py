@@ -5,7 +5,7 @@ import torch
 
 from sentence_transformers import SentenceTransformer, util
 
-from sklearn.linear_model import LogisticRegression, RidgeClassifier
+from sklearn.linear_model import LogisticRegression
 
 
 class SbertClassifier:

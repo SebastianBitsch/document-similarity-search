@@ -10,24 +10,17 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\data\train\Healthcare.csv">
+        <entry key="\data\train\Computer vision.csv">
           <value>
             <Attribute>
               <option name="separator" value=";" />
             </Attribute>
           </value>
         </entry>
-        <entry key="\result.csv">
+        <entry key="\data\train\Healthcare.csv">
           <value>
             <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\top_5_all.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
+              <option name="separator" value=";" />
             </Attribute>
           </value>
         </entry>
