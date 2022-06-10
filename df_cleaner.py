@@ -26,7 +26,7 @@ class DataframeCleaner:
 
     def save_df(self, path:str, sep = ',') -> str:
         self.df.to_csv(path, sep=sep, encoding='utf-8-sig', index=False)
-        print(f"Saved df of size {df.shape} to path {path}")
+        print(f"Saved df of size {self.df.shape} to path {path}")
 
     def n_rows(self) -> int:
         return len(self.df)
@@ -59,7 +59,7 @@ class DataframeCleaner:
         """
         before = self.n_rows()
         self.df = self.df.drop_duplicates(subset=[col_name],keep='first')
-        self.print_dropped(before, "drop_duplicate_ids")
+        self.print_dropped(before, "drop_duplicates")
     
     def drop_col(self, col_name:str) -> None:
         """
@@ -72,7 +72,7 @@ class DataframeCleaner:
         Drop all rows that have NA values in the given column name(s)
         """
         before = self.n_rows()
-        self.df.dropna(axis='rows', subset = [col_name], inplace=True)
+        self.df = self.df.dropna(axis='rows', subset = [col_name])
         self.print_dropped(before, "drop_na_rows")
 
     def drop_empty_rows(self, col_name: str) -> None:
@@ -171,7 +171,6 @@ class DataframeCleaner:
 
 # Demo
 if __name__ == "__main__":
-    
     df = read_csv('data/raw_data/combined.csv')
     
     # Load in which continent each country is in
@@ -179,7 +178,6 @@ if __name__ == "__main__":
     continent_codes = json.load(f)
 
     cleaner = DataframeCleaner(df)
-
 
     # Drop text column
     cleaner.drop_col('text')
@@ -201,3 +199,24 @@ if __name__ == "__main__":
 
     cleaner.save_df("data/processed_data/cleaned.csv")
     
+
+    # CLEAN COMPARISON DATA AGNEWS
+    # df = read_csv('data/comparison_data/agnews.csv')
+    # df = df.rename(columns={'Description':'description'})
+    # df = df.rename(columns={'Class Index':'Rating'})
+    # df = df[['Rating',"description"]]
+
+    # cleaner = DataframeCleaner(df)
+    # cleaner.drop_duplicates('description')
+    # cleaner.drop_na_rows('description')
+    # cleaner.drop_long_rows('description')
+
+    # # Clean text
+    # cleaner.lower_text('description')
+    # cleaner.remove_non_text('description')
+    # cleaner.drop_empty_rows('description')
+    # no_stop_words = cleaner.add_no_stopwords_col('description')
+    # stemmed_text = cleaner.add_stemmed_col(no_stop_words)
+
+    # cleaner.save_df("data/comparison_data/agnews_cleaned.csv")
+
