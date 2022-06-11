@@ -87,6 +87,7 @@ class DataFrameFeatures:
         col = self.main_col if col == None else col
         return self.df[col].to_list()
 
+
     def shape(self) -> str:
         return self.df.shape
 
