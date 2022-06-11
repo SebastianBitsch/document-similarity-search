@@ -82,7 +82,7 @@ class DataFrameClassifier:
         # X_medians = np.mean(feature_vectors, axis=1)
         # X = np.hstack((X_means, X_vars, X_medians))
 
-        X = np.array([np.median(self.dff.feature_vector(doc_id),axis=1) for doc_id in self.dff.documents('id')])
+        X = np.array([np.mean(self.dff.feature_vector(doc_id),axis=1) for doc_id in self.dff.documents('id')])
         y = np.array(self.dff.documents('Rating'))
         
         if not split:

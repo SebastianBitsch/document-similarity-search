@@ -40,18 +40,19 @@ class DataFrameFeatures:
         if verbose:
             print("Initializing DataFrameFeatures object")
 
+
         self.df = df
         self.main_col = main_col
 
         # Fit the tf-idf vectorizer initially to avoid waittime when used later
-        self.vectorizer = vectorizer#TfidfVectorizer(max_features=200)#copy(vectorizer)
-        self.fitted_vectorizer = vectorizer.transform(self.documents(main_col))#self.vectorizer.fit_transform(self.df[main_col])
+        self.vectorizer = vectorizer
+        self.fitted_vectorizer = vectorizer.transform(self.documents(main_col))
 
         # Read in the pretrained glove embeddings
         self.glove = glove_embeddings
 
         # Create keyword extractor
-        self.keyword_extractor = Rake() #max_length=1
+        self.keyword_extractor = Rake()
         self.keyword_vectors = []
 
         # Create average glove embedding vectors
@@ -59,7 +60,7 @@ class DataFrameFeatures:
         if not glove_embeddings:
             return
 
-        for doc in self.documents('description_no_stopwords'):
+        for doc in self.documents(main_col):
             avg_vector = np.mean([self.glove[str(word)] for word in doc.split() if str(word) in self.glove], axis=0)
             self.avg_glove_vectors.append(avg_vector)
 
@@ -107,7 +108,6 @@ class DataFrameFeatures:
         """
         query_vector = self.vectorizer.transform([query]).toarray()
         return np.array([cosine_similarity([x],query_vector)[0][0] for x in self.fitted_vectorizer.toarray()])
-        #return np.array([cosine_similarity([x],query_vector)[0][0] for x in self.fitted_vectorizer.toarray()])
 
 
     def overlapping_words_rank(self, query: str) -> np.ndarray:
@@ -203,12 +203,13 @@ class DataFrameFeatures:
         text = query[self.main_col]
 
         cosine_rank = self.cosine_similarity_rank(text)
-        overlap_rank = self.overlapping_words_rank(text)
-        glove_rank = self.glove_rank(query['description_no_stopwords'])
-        nace_rank = self.nace_code_rank(query['NACE'])
-        keyword_rank = self.keyword_rank(query['description_no_stopwords'])
+        # overlap_rank = self.overlapping_words_rank(text)
+        # glove_rank = self.glove_rank(text)
+        # nace_rank = self.nace_code_rank(query['NACE'])
+        # keyword_rank = self.keyword_rank(text)
         
-        return np.array([cosine_rank, overlap_rank, glove_rank, nace_rank, keyword_rank],dtype=object)
+        return np.array([cosine_rank],dtype=object)
+        # return np.array([cosine_rank, overlap_rank, glove_rank, keyword_rank],dtype=object)
 
     def get_tfidf_vectors(self) -> np.ndarray:
         return self.fitted_vectorizer.toarray()
