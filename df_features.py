@@ -48,6 +48,11 @@ class DataFrameFeatures:
         self.vectorizer = vectorizer
         self.fitted_vectorizer = vectorizer.transform(self.documents(main_col))
 
+
+        self.avg_char_count = sum([len(x) for x in self.documents(main_col)]) / self.n_rows()
+        self.avg_word_count = sum([len(x.split()) for x in self.documents(main_col)]) / self.n_rows()
+
+
         # Read in the pretrained glove embeddings
         self.glove = glove_embeddings
 
@@ -184,6 +189,16 @@ class DataFrameFeatures:
         return np.array([cosine_similarity([query_vector],[i])[0][0] for i in self.avg_glove_vectors])
 
 
+    def word_feature(self, query:str) -> float:
+        return len(query.split()) / self.avg_word_count
+
+    def char_feature(self, query:str) -> float:
+        return len(query) / self.avg_char_count
+
+    def word_density_feature(self, query:str) -> float:
+        return self.char_feature(query) / self.word_feature(query)
+
+
     def feature_vector(self, id: str) -> np.ndarray:
         """
         Given a company id, return the feature vector of that company using the cosine, overlap, glove and nace code features
@@ -203,13 +218,28 @@ class DataFrameFeatures:
         text = query[self.main_col]
 
         cosine_rank = self.cosine_similarity_rank(text)
-        # overlap_rank = self.overlapping_words_rank(text)
-        # glove_rank = self.glove_rank(text)
-        # nace_rank = self.nace_code_rank(query['NACE'])
-        # keyword_rank = self.keyword_rank(text)
+        overlap_rank = self.overlapping_words_rank(text)
+        glove_rank = self.glove_rank(text)
+        nace_rank = self.nace_code_rank(query['NACE'])
+        keyword_rank = self.keyword_rank(text)
         
-        return np.array([cosine_rank],dtype=object)
-        # return np.array([cosine_rank, overlap_rank, glove_rank, keyword_rank],dtype=object)
+        return np.array([cosine_rank, overlap_rank, glove_rank, nace_rank, keyword_rank],dtype=object)
+
+
+    def statistics_vector(self, id: str) -> np.ndarray:
+                # Safeguard against no query results or more than one query result (shouldnt happen tho)
+        query = self.df[self.df.id == id]
+        if len(query) == 0:
+            print(f"No companies with id: {id} were found.")
+            return
+
+        query = query.iloc[0]
+        text = query[self.main_col]
+
+        word_count = self.word_feature(text)
+        char_count = self.char_feature(text)
+        density_count = self.word_density_feature(text)
+        return np.array([word_count, char_count, density_count])
 
     def get_tfidf_vectors(self) -> np.ndarray:
         return self.fitted_vectorizer.toarray()
