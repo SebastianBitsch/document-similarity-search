@@ -45,6 +45,9 @@ class DataFrameFeatures:
         self.main_col = main_col
 
         # Fit the tf-idf vectorizer initially to avoid waittime when used later
+        # self.vectorizer = TfidfVectorizer(max_features=250)
+        # self.vectorizer.fit_transform(self.documents(main_col))
+        # self.fitted_vectorizer = self.vectorizer.transform(self.documents(main_col))
         self.vectorizer = vectorizer
         self.fitted_vectorizer = vectorizer.transform(self.documents(main_col))
 
@@ -190,14 +193,14 @@ class DataFrameFeatures:
         return np.array([cosine_similarity([query_vector],[i])[0][0] for i in self.avg_glove_vectors])
 
 
-    def word_feature(self, query:str) -> float:
+    def word_count_feature(self, query:str) -> float:
         return len(query.split()) / self.avg_word_count
 
-    def char_feature(self, query:str) -> float:
+    def char_count_feature(self, query:str) -> float:
         return len(query) / self.avg_char_count
 
     def word_density_feature(self, query:str) -> float:
-        return self.char_feature(query) / self.word_feature(query)
+        return self.char_count_feature(query) / self.word_count_feature(query)
 
 
     def feature_vector(self, id: str) -> np.ndarray:
@@ -237,8 +240,8 @@ class DataFrameFeatures:
         query = query.iloc[0]
         text = query[self.main_col]
 
-        word_count = self.word_feature(text)
-        char_count = self.char_feature(text)
+        word_count = self.word_count_feature(text)
+        char_count = self.char_count_feature(text)
         density_count = self.word_density_feature(text)
         return np.array([word_count, char_count, density_count])
 

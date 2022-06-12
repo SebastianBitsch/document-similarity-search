@@ -82,11 +82,12 @@ class DataFrameClassifier:
         X_q25 = np.quantile(feature_vectors,q=0.25,axis=0)
         X_medians = np.median(feature_vectors, axis=0)
         X_q75 = np.quantile(feature_vectors,q=0.75,axis=0)
-        # idf = self.dff.vectorizer.idf_.reshape(1,-1) / np.mean(self.dff.vectorizer.idf_)
+        #idf = self.dff.vectorizer.idf_.reshape(1,-1) / np.mean(self.dff.vectorizer.idf_)
         X_1 = np.vstack((X_means, X_vars, X_q25, X_medians, X_q75)).T
 
-        # X_1 = np.array([np.mean(self.dff.feature_vector(doc_id),axis=1) for doc_id in self.dff.documents('id')])
+        # X = np.array([np.mean(self.dff.feature_vector(doc_id),axis=1) for doc_id in self.dff.documents('id')])
         X_2 = np.array([self.dff.statistics_vector(doc_id) for doc_id in self.dff.documents('id')])
+        
         X = np.hstack((X_1, X_2))
         y = np.array(self.dff.documents('Rating'))
         
