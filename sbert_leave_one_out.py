@@ -104,6 +104,7 @@ if __name__ == '__main__':
     y_true = [1 if val == 'positive' else 0 for val in y_true]
     y_pred = [1 if val == 'positive' else 0 for val in y_pred]
     mcnemar = [v1 == v2 for v1, v2 in zip(y_true, y_pred)]
+
     '''disp = PrecisionRecallDisplay.from_predictions(np.array(y_true), np.array(y_pred))
     disp.plot()
     plt.show()'''
@@ -117,8 +118,8 @@ if __name__ == '__main__':
           f'Precision is {precision}\n'
           f'Recall is {recall}')'''
 
-    print(np.mean(precisions))
-    print(np.mean(recalls))
+    # print(np.mean(precisions))
+    # print(np.mean(recalls))
 
 
 

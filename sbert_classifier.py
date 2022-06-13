@@ -14,7 +14,7 @@ class SbertClassifier:
         self.corpus_embeddings = corpus_embeddings
         self.encoder = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
         if classifier == 'LogReg':
-            self.clf = LogisticRegression(class_weight='balanced')
+            self.clf = LogisticRegression(random_state=0, class_weight='balanced', fit_intercept=False)
         else:
             self.clf = DecisionTreeClassifier()
         self.fitted = False
