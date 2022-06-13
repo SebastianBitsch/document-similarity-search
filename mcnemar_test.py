@@ -33,7 +33,7 @@ for sb, tf in zip(mcnemarsbert, mcnemarstf):
         n22 += 1
 
 data = [[n11, n12], [n21, n22]]
-print('sbert and tfidf', mcnemar(data, exact=True, correction=True))
+print('sbert and tfidf', mcnemar(data, exact=False, correction=True))
 
 n11, n12, n21, n22 = 0, 0, 0, 0
 for sb, tf in zip(mcnemarsbert, mcnemarsfeatures):
@@ -47,7 +47,7 @@ for sb, tf in zip(mcnemarsbert, mcnemarsfeatures):
         n22 += 1
 
 data = [[n11, n12], [n21, n22]]
-print('sbert and features', mcnemar(data, exact=True, correction=True))
+print('sbert and features', mcnemar(data, exact=False, correction=True))
 
 n11, n12, n21, n22 = 0, 0, 0, 0
 for sb, tf in zip(mcnemarstf, mcnemarsfeatures):
@@ -61,4 +61,4 @@ for sb, tf in zip(mcnemarstf, mcnemarsfeatures):
         n22 += 1
 
 data = [[n11, n12], [n21, n22]]
-print('tfidf and features', mcnemar(data, exact=True, correction=True))
+print('tfidf and features', mcnemar(data, exact=False, correction=True))

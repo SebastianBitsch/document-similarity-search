@@ -33,8 +33,6 @@ class SbertClassifier:
         self.clf.fit(X, y)
         self.fitted = True
 
-
-
     def classify_no_encode(self, X, y):
         return self.clf.predict(X), self.clf.predict_proba(X), self.clf.predict(X) == y
 
@@ -51,15 +49,24 @@ class SbertClassifier:
         logreg.fit(X, y)
         return logreg.predict(query_embedding), logreg.predict_proba(query_embedding)
 
-    def interactive_classify(self, queries, positives, negatives, reruns=3):
+    def interactive_classify(self, queries, positives, negatives, test, reruns=3):
         if reruns == 0:
+            q_labels = ['positive', 'positive', 'positive', 'positive', 'positive',
+                        'negative', 'negative', 'negative', 'negative', 'negative']
             print('Final run')
-            prediction, probability, desc = [], [], []
-            for q in queries:
+            prediction, probability, desc, correct = [], [], [], []
+            for i, q in enumerate(test):
                 pred, prob = self.classify(q, positives, negatives)
                 prediction.append(pred), probability.append(prob), desc.append(q)
-            return {'prediction': prediction, 'probability': probability, 'description': desc}
+                correct.append(pred == q_labels[i])
+            return {'prediction': prediction, 'probability': probability, 'description': desc, 'correct': correct}
         else:
+            if reruns == 3:
+                tested = []
+                for q in test:
+                    pred, _ = self.classify(q, positives, negatives)
+                    tested.append(pred)
+                print(tested)
             print(f'Runs remaining: {reruns}')
             clf_prediction, clf_probability = [], []
 
@@ -74,7 +81,7 @@ class SbertClassifier:
                 triplets = (q, pred, max(probs) - min(probs))
                 diffs.append(triplets)
             diffs = sorted(diffs, key=lambda x: x[2])
-            min_diff = diffs[:5]
+            min_diff = diffs[:2]
 
             # prompt user for labels for texts in min_diff
             for val in min_diff:
@@ -92,7 +99,7 @@ class SbertClassifier:
 
             # rerun interactive_classify
             reruns -= 1
-            return self.interactive_classify(new_queries, positives, negatives, reruns)
+            return self.interactive_classify(new_queries, positives, negatives, test, reruns)
 
 
 if __name__ == '__main__':
@@ -105,7 +112,7 @@ if __name__ == '__main__':
         print(f'{hit["score"]}   {passages[hit["corpus_id"]]}')
         print(df.iloc[hit['corpus_id']].id)'''
 
-    train = pd.read_csv('data/train/Online games.csv', delimiter=';')
+    train = pd.read_csv('data/train/Manufacturers.csv', delimiter=';')
     positives_id = train[(train['Rating'] == 1.0)]['Firmnav ID'].tolist()
     negatives_id = train[(train['Rating'] == 0.0) & (train['AI search'] != 'Initial')]['Firmnav ID'].tolist()
     unrated_id = train[(train['Rating'] != 1.0) & (train['Rating'] != 0.0)]['Firmnav ID'].tolist()
@@ -133,10 +140,14 @@ if __name__ == '__main__':
 
     positives_txt = [item for sublist in positives_txt for item in sublist]
     negatives_txt = [item for sublist in negatives_txt for item in sublist]
-    interactive_results = sbert.interactive_classify(unrated_txt, positives_txt, negatives_txt, reruns=3)
+    positives_txt = positives_txt[5:]
+    negatives_txt = negatives_txt[5:]
+    qs = positives_txt[:5] + negatives_txt[:5]
+    qs = [[val] for val in qs]
+    interactive_results = sbert.interactive_classify(unrated_txt, positives_txt, negatives_txt, qs, reruns=0)
     interactive_results = pd.DataFrame(interactive_results)
     interactive_results.to_csv('interactive_results.csv', index=True)
-    '''prediction, probability, desc = [], [], []
+    prediction, probability, desc = [], [], []
     for txt in unrated_txt:
         pred, proba = sbert.classify(txt, positives_txt, negatives_txt)
         prediction.append(pred)
@@ -147,4 +158,4 @@ if __name__ == '__main__':
     # result.to_csv('result.csv', index=True)
     print(result)
     print(result[result['prediction'] == 'positive'].shape[0])
-    print(result[result['prediction'] == 'positive'].description)'''
+    print(result[result['prediction'] == 'positive'].description)
