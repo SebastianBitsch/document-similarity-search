@@ -6,13 +6,17 @@ import torch
 from sentence_transformers import SentenceTransformer, util
 
 from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
 
 
 class SbertClassifier:
-    def __init__(self, corpus_embeddings):
+    def __init__(self, corpus_embeddings, classifier='LogReg'):
         self.corpus_embeddings = corpus_embeddings
         self.encoder = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
-        self.clf = LogisticRegression(class_weight='balanced')
+        if classifier == 'LogReg':
+            self.clf = LogisticRegression(class_weight='balanced')
+        else:
+            self.clf = DecisionTreeClassifier()
         self.fitted = False
 
     def encode(self, text):
@@ -25,9 +29,11 @@ class SbertClassifier:
         hits = hits[0]
         return hits
 
-    def fit_logreg(self, X, y):
+    def fit_clf(self, X, y):
         self.clf.fit(X, y)
         self.fitted = True
+
+
 
     def classify_no_encode(self, X, y):
         return self.clf.predict(X), self.clf.predict_proba(X), self.clf.predict(X) == y

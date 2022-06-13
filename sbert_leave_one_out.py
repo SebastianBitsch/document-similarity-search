@@ -18,11 +18,11 @@ trainfiles = ['Computer vision.csv', 'Consulting.csv', 'Fintech.csv', 'Fish proc
               'Wind turbine tech.csv', ]
 
 corpus = torch.load('corpus_embeddings_bi_encoder.pt')
-clf = SbertClassifier(corpus)
+#clf = SbertClassifier(corpus, classifier='Tree')
 data = pd.read_csv('data/cleaned_v1.csv')
 
 
-def get_results(sbert=clf, filenames=None):
+def get_results(sbert=None, filenames=None):
     if filenames is None:
         filenames = trainfiles
     # left_out = np.random.choice(filenames)
@@ -38,6 +38,7 @@ def get_results(sbert=clf, filenames=None):
     loo = LeaveOneOut()
     for name in filenames:
         # np.random.seed(40)
+        clf = SbertClassifier(corpus, classifier='LogReg')
         true_positive = 0
         true_negative = 0
         false_positive = 0
@@ -66,7 +67,7 @@ def get_results(sbert=clf, filenames=None):
         pos_labels = ['positive' for _ in range(len(positive_txt))]
         neg_labels = ['negative' for _ in range(len(negative_txt))]
         X = np.concatenate((positive_txt, negative_txt))
-        X = sbert.encode(list(X))
+        X = clf.encode(list(X))
         y = np.concatenate((pos_labels, neg_labels))
 
         for train_index, test_index in tqdm(loo.split(X)):
@@ -74,8 +75,8 @@ def get_results(sbert=clf, filenames=None):
             Xtrain, Xtest = X[train_index], X[test_index]
             ytrain, ytest = y[train_index], y[test_index]
             # print(Xtrain, Xtest, ytrain, ytest)
-            sbert.fit_logreg(Xtrain, ytrain)
-            prediction, _, correct = sbert.classify_no_encode(Xtest, ytest)
+            clf.fit_clf(Xtrain, ytrain)
+            prediction, _, correct = clf.classify_no_encode(Xtest, ytest)
             if prediction[0] == 'positive' and correct:
                 true_positive += 1
             elif prediction[0] == 'negative' and correct:
@@ -99,9 +100,10 @@ def get_results(sbert=clf, filenames=None):
 
 if __name__ == '__main__':
     # for _ in tqdm(range(10)):
-    TN, TP, FP, FN, total, y_true, y_pred, recalls, precisions = get_results()
+    _, _, _, _, _, y_true, y_pred, _, _ = get_results()
     y_true = [1 if val == 'positive' else 0 for val in y_true]
     y_pred = [1 if val == 'positive' else 0 for val in y_pred]
+    mcnemar = [v1 == v2 for v1, v2 in zip(y_true, y_pred)]
     '''disp = PrecisionRecallDisplay.from_predictions(np.array(y_true), np.array(y_pred))
     disp.plot()
     plt.show()'''
