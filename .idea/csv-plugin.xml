@@ -10,6 +10,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\data\train\Computer vision.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\data\train\Healthcare.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>
