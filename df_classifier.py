@@ -4,7 +4,7 @@ from tqdm import tqdm
 import pandas as pd
 from df_features import DataFrameFeatures
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
+
 
 class DataFrameClassifier:
 
