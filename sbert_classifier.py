@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 import torch
+import xgboost
 
 from sentence_transformers import SentenceTransformer, util
 
@@ -13,8 +14,11 @@ class SbertClassifier:
     def __init__(self, corpus_embeddings, classifier='LogReg'):
         self.corpus_embeddings = corpus_embeddings
         self.encoder = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
+        self.classifier = classifier
         if classifier == 'LogReg':
             self.clf = LogisticRegression(random_state=0, class_weight='balanced', fit_intercept=False)
+        elif classifier == 'xg':
+            self.clf = xgboost.XGBRegressor()
         else:
             self.clf = DecisionTreeClassifier()
         self.fitted = False
@@ -34,7 +38,14 @@ class SbertClassifier:
         self.fitted = True
 
     def classify_no_encode(self, X, y):
-        return self.clf.predict(X), self.clf.predict_proba(X), self.clf.predict(X) == y
+        if self.classifier != 'xg':
+            return self.clf.predict(X), self.clf.predict_proba(X), self.clf.predict(X) == y
+        else:
+            if self.clf.predict(X) >= 0.5:
+                return [1], None, None
+            else:
+                return [0], None, None
+            # return 1, 'None', 'None' if self.clf.predict(X) >= 0.5 else 0, 'None', 'None'
 
     def classify(self, query, positives, negatives):
         query_embedding = self.encoder.encode(query)
