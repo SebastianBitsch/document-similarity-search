@@ -1,3 +1,4 @@
+from sklearn.metrics import precision_recall_curve
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -7,6 +8,23 @@ def read_csv(path, sep=',', index_col=None, quoting=0, header='infer', verbose:b
         print(f"* Reading CSV from path: {path}. Size: {df.shape}")
     return df
 
+
+def plot_precision_recall(y_test, y_preds_proba, title:str):
+    #calculate precision and recall
+    precision, recall, _ = precision_recall_curve(y_test, y_preds_proba)
+
+    #create precision recall curve
+    fig, ax = plt.subplots()
+    ax.plot(recall, precision)
+
+    #add axis labels to plot
+    ax.set_title(title)
+    ax.set_ylabel('Precision')
+    ax.set_xlabel('Recall')
+    ax.set_xlim([0,1])
+    ax.set_ylim([0,1])
+
+    return fig, ax
 
 def plot_accuracies(accuracies: dict, title: str):
     """
@@ -18,7 +36,7 @@ def plot_accuracies(accuracies: dict, title: str):
     plt.bar(range(len(accuracies)), list(accuracies.values()), align='center')
     plt.xticks(range(len(accuracies)), list(accuracies.keys()), rotation=90)
     plt.ylim([0,1.1])
-    
+
     ax.set_title(title)
     ax.yaxis.grid()
     ax.set_axisbelow(True)
