@@ -18,7 +18,11 @@ def plot_accuracies(accuracies: dict, title: str):
     plt.bar(range(len(accuracies)), list(accuracies.values()), align='center')
     plt.xticks(range(len(accuracies)), list(accuracies.keys()), rotation=90)
     plt.ylim([0,1.1])
+    
     ax.set_title(title)
+    ax.yaxis.grid()
+    ax.set_axisbelow(True)
+
 
     for bars in ax.containers:
         ax.bar_label(bars)
